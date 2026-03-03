@@ -1,600 +1,176 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8" />
-<title>23 ФЕВРАЛЯ — Защитник Отечества</title>
-<style>
-body{
-  margin:0;
-  background:linear-gradient(to bottom,#1a2f1a,#0d1a0d);
-  font-family:'Arial Black',Arial,sans-serif;
-  overflow:hidden;
-  display:flex;
-  justify-content:center;
-  align-items:flex-start;
-  padding-top:20px;
-  gap:20px;
-}
-#legend{
-  width:220px;
-  background:linear-gradient(145deg,#1b5e20,#0d1a0d);
-  border:3px solid #b71c1c;
-  border-radius:12px;
-  padding:15px;
-  color:#ffca28;
-  box-shadow:0 0 20px rgba(183,28,28,0.4);
-}
-#legend h3{
-  margin:0 0 15px 0;
-  text-align:center;
-  color:#fff;
-  text-shadow:0 0 10px #b71c1c;
-  font-size:1.2em;
-}
-.legend-item{
-  display:flex;
-  align-items:center;
-  margin-bottom:12px;
-  padding:8px;
-  background:rgba(0,0,0,0.3);
-  border-radius:8px;
-  border:1px solid #336633;
-}
-.legend-img{
-  width:50px;
-  height:50px;
-  object-fit:contain;
-  margin-right:10px;
-  filter:drop-shadow(0 0 5px rgba(255,202,40,0.5));
-}
-.legend-text{
-  font-size:0.9em;
-  line-height:1.3;
-}
-.legend-name{
-  color:#fff;
-  font-weight:bold;
-  display:block;
-}
-.legend-points{
-  color:#ffca28;
-  font-size:0.85em;
-}
-#game-container{
-  text-align:center;
-}
-canvas{
-  display:block;
-  margin:15px auto;
-  border:4px solid #b71c1c;
-  background:#fff;
-  box-shadow:0 0 30px rgba(183,28,28,0.5);
-}
-#ui{
-  text-align:center;
-  margin:10px;
-  font-size:1.4em;
-  color:#ffca28;
-  text-shadow:0 0 8px #b71c1c;
-}
-#ui span{color:#fff;font-weight:bold;}
-button{
-  padding:12px 40px;
-  font-size:1.4em;
-  margin:15px;
-  cursor:pointer;
-  background:#b71c1c;
-  color:white;
-  border:3px solid #ffca28;
-  border-radius:8px;
-  font-weight:bold;
-  text-shadow:1px 1px 3px black;
-  box-shadow:0 0 12px #b71c1c;
-  transition:all 0.3s ease;
-}
-button:hover{
-  background:#d32f2f;
-  transform:scale(1.05);
-  box-shadow:0 0 20px #b71c1c;
-}
-#modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.9);
-  justify-content:center;
-  align-items:center;
-  z-index:1000;
-}
-#modalContent{
-  background:linear-gradient(145deg,#1b5e20,#0d1a0d);
-  border:5px solid #b71c1c;
-  border-radius:16px;
-  padding:50px 70px;
-  text-align:center;
-  color:#fff;
-  box-shadow:0 0 50px rgba(183,28,28,0.8);
-  max-width:500px;
-}
-#modal h1,#modal h2,#modal h3,#modal h4,#modal h5{
-  margin:0.3em 0;
-  font-weight:bold;
-  text-shadow:0 0 20px #b71c1c;
-}
-#modal h1{font-size:3.5rem;color:#ffd700;}
-#modal h2{font-size:3rem;color:#ffca28;}
-#modal h3{font-size:2.5rem;color:#ff9800;}
-#modal h4{font-size:2rem;color:#ff5722;}
-#modal h5{font-size:1.5rem;color:#ff8a65;}
-.congrats-score{
-  font-size:2em;
-  color:#ffca28;
-  margin:20px 0;
-  text-shadow:0 0 15px #b71c1c;
-}
-.congrats-message{
-  font-size:1.2em;
-  color:#e0e0e0;
-  margin:15px 0;
-  line-height:1.5;
-}
-#closeModal{
-  margin-top:25px;
-  padding:12px 40px;
-  font-size:1.2em;
-  background:#b71c1c;
-  color:white;
-  border:3px solid #ffca28;
-  border-radius:8px;
-  cursor:pointer;
-  font-weight:bold;
-  transition:all 0.3s ease;
-}
-#closeModal:hover{
-  background:#d32f2f;
-  transform:scale(1.05);
-}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Поздравления — 23 февраля и 8 марта</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-/* Стили для модального окна изображения */
-#imageModal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.9);
-  justify-content:center;
-  align-items:center;
-  z-index:2000;
-  cursor:pointer;
-}
-#imageModalContent{
-  background:linear-gradient(145deg,#1b5e20,#0d1a0d);
-  border:4px solid #b71c1c;
-  border-radius:12px;
-  padding:20px;
-  text-align:center;
-  max-width:90vw;
-  max-height:90vh;
-  cursor:default;
-}
-#modalImage{
-  max-width:400px;
-  max-height:400px;
-  width:auto;
-  height:auto;
-  border-radius:8px;
-  filter:drop-shadow(0 0 20px rgba(255,202,40,0.5));
-}
-#modalCaption{
-  color:#ffca28;
-  font-size:1.4em;
-  margin:15px 0;
-  text-shadow:0 0 10px #b71c1c;
-  font-weight:bold;
-}
-#imageModalContent button{
-  margin-top:10px;
-  padding:10px 30px;
-  font-size:1.1em;
-  background:#b71c1c;
-  color:white;
-  border:2px solid #ffca28;
-  border-radius:6px;
-  cursor:pointer;
-}
-.legend-item{
-  cursor:pointer;
-  transition:transform 0.2s ease, box-shadow 0.2s ease;
-}
-.legend-item:hover{
-  transform:scale(1.02);
-  box-shadow:0 0 15px rgba(255,202,40,0.3);
-  background:rgba(255,202,40,0.1);
-}
+    body {
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      gap: 60px;
+    }
 
-</style>
+    h1 {
+      font-size: clamp(2.2rem, 6vw, 4.2rem);
+      background: linear-gradient(90deg, #60a5fa, #a78bfa, #f472b6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .subtitle {
+      font-size: clamp(1.1rem, 3vw, 1.5rem);
+      color: #94a3b8;
+      text-align: center;
+      max-width: 600px;
+      line-height: 1.4;
+    }
+
+    .holidays {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .holiday-card {
+      background: rgba(30, 41, 59, 0.7);
+      border-radius: 20px;
+      padding: 40px 50px;
+      width: 100%;
+      max-width: 480px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      transition: all 0.35s ease;
+      text-align: center;
+    }
+
+    .holiday-card:hover {
+      transform: translateY(-12px);
+      border-color: #818cf8;
+      box-shadow: 0 25px 50px -12px rgba(129, 140, 248, 0.4);
+    }
+
+    .holiday-card h2 {
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      margin-bottom: 30px;
+    }
+
+    .feb23 { color: #60a5fa; }
+    .mar8  { color: #f472b6; }
+
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      align-items: center;
+    }
+
+    .link-btn {
+      display: inline-block;
+      padding: 14px 32px;
+      font-size: 1.15rem;
+      font-weight: 500;
+      color: white;
+      background: linear-gradient(90deg, #4f46e5, #7c3aed);
+      border-radius: 12px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      min-width: 220px;
+      box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+    }
+
+    .link-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(124, 58, 237, 0.5);
+    }
+
+    .main-version {
+      background: linear-gradient(90deg, #ec4899, #f472b6, #fb7185) !important;
+      box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4) !important;
+      font-weight: 600;
+      position: relative;
+    }
+
+    .main-version::after {
+      content: "★ основная версия ★";
+      position: absolute;
+      top: -10px;
+      right: -30px;
+      background: #fbbf24;
+      color: #1e293b;
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      transform: rotate(12deg);
+      font-weight: bold;
+    }
+
+    footer {
+      margin-top: 80px;
+      color: #64748b;
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .holidays {
+        flex-direction: column;
+        align-items: center;
+      }
+      .holiday-card {
+        max-width: 90%;
+      }
+    }
+  </style>
 </head>
 <body>
 
-<div id="legend">
-  <h3>📋 ЦЕЛИ</h3>
-  <div class="legend-item" onclick="showImage('./img/НЖЯ.png', 'Нежелательное явление')">
-    <img class="legend-img" src="./img/НЖЯ.png" alt="НЖЯ" onerror="this.style.display='none'">
-    <div class="legend-text">
-      <span class="legend-name">Нежелательное явление</span>
-      <span class="legend-points">★ 30 очков</span>
+  <h1>Поздравления</h1>
+  <p class="subtitle">Выберите праздник и удивите близких небольшой интерактивной открыткой</p>
+
+  <div class="holidays">
+
+    <!-- 23 февраля -->
+    <div class="holiday-card">
+      <h2 class="feb23">23 февраля</h2>
+      <div class="links">
+        <a href="23februare.html" class="link-btn">Открыть поздравление →</a>
+      </div>
     </div>
-  </div>
-  <div class="legend-item" onclick="showImage('./img/mid.png', 'Мошенник')">
-    <img class="legend-img" src="./img/mid.png" alt="Мошенник" onerror="this.style.display='none'">
-    <div class="legend-text">
-      <span class="legend-name">Мошенник</span>
-      <span class="legend-points">★ 20 очков</span>
+
+    <!-- 8 марта -->
+    <div class="holiday-card">
+      <h2 class="mar8">8 марта</h2>
+      <div class="links">
+        <a href="mahjong.html" class="link-btn">Mahjong «Весенние тайны»</a>
+        <a href="memory.html" class="link-btn main-version">Memory «Цветочный сад тайн»</a>
+        <a href="puzzle.html" class="link-btn">Слайдинг-пазл</a>
+      </div>
     </div>
-  </div>
-  <div class="legend-item" onclick="showImage('./img/huge.png', 'Риск')">
-    <img class="legend-img" src="./img/huge.png" alt="Риск" onerror="this.style.display='none'">
-    <div class="legend-text">
-      <span class="legend-name">Риск</span>
-      <span class="legend-points">★ 10 очков</span>
-    </div>
-  </div>
-  <div style="margin-top:15px;padding-top:15px;border-top:2px solid #b71c1c;font-size:0.85em;color:#aaa;text-align:center;">
-    Промахов: <span style="color:#ffca28;">3</span> = Конец игры
-  </div>
-</div>
 
-<!-- Модальное окно для увеличенного изображения -->
-<div id="imageModal" onclick="closeImageModal()">
-  <div id="imageModalContent" onclick="event.stopPropagation()">
-    <img id="modalImage" src="" alt="">
-    <div id="modalCaption"></div>
-    <button onclick="closeImageModal()">Закрыть</button>
-  </div>
-</div>
-
-<div id="game-container">
-  <div id="ui">
-    ОЧКИ: <span id="score">0</span>
-    ПРОМАХИ: <span id="misses">0</span>/3
-    УРОВЕНЬ: <span id="level">1</span>
-    <br>
-    <button id="startBtn">К БОЮ!</button>
   </div>
 
-  <canvas id="game" width="600" height="800"></canvas>
-</div>
+  <footer>
+    С любовью к прекрасному полу · 2025–2026
+  </footer>
 
-<div id="modal">
-  <div id="modalContent">
-    <div id="congrats"></div>
-    <button id="closeModal">Ещё раз в бой!</button>
-  </div>
-</div>
-
-<script>
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d",{alpha:false});
-
-const scoreEl=document.getElementById("score");
-const missesEl=document.getElementById("misses");
-const levelEl=document.getElementById("level");
-const startBtn=document.getElementById("startBtn");
-const modal=document.getElementById("modal");
-const congrats=document.getElementById("congrats");
-const closeModal=document.getElementById("closeModal");
-
-let score=0,misses=0,level=1;
-let gameOver=true;
-let fallingItems=[];
-let explosions=[];
-let mouseX=300,mouseY=400;
-let lastSpawnTime=0;
-let spawnInterval=2500;
-let baseSpeed=2;
-
-const PLAYER_ZONE_HEIGHT=100;
-const BANK_WIDTH=140*1.4;
-const BANK_HEIGHT=90*1.4;
-
-const bankImg=new Image();
-bankImg.src="./img/bank.svg";
-
-const smallImg=new Image();
-smallImg.src="./img/НЖЯ.png";
-
-const mediumImg=new Image();
-mediumImg.src="./img/mid.png";
-
-const largeImg=new Image();
-largeImg.src="./img/huge.png";
-
-const shotgun=new Image();
-shotgun.src="./img/shotgun.svg";
-
-const crosshair=new Image();
-crosshair.src="./img/cross_hair.svg";
-
-const bank={
-  x:canvas.width-BANK_WIDTH,
-  y:canvas.height-PLAYER_ZONE_HEIGHT-BANK_HEIGHT+20
-};
-
-const player={
-  x:canvas.width/2,
-  y:canvas.height-PLAYER_ZONE_HEIGHT/2,
-  width:140,
-  height:60
-};
-
-const types=[
-  ...Array(3).fill("small"),
-  ...Array(2).fill("medium"),
-  ...Array(5).fill("large")
-];
-
-function showImage(src, caption){
-  const modal = document.getElementById('imageModal');
-  const img = document.getElementById('modalImage');
-  const cap = document.getElementById('modalCaption');
-  
-  img.src = src;
-  cap.textContent = caption;
-  modal.style.display = 'flex';
-}
-
-function closeImageModal(){
-  document.getElementById('imageModal').style.display = 'none';
-}
-
-// Закрытие по Escape
-document.addEventListener('keydown', (e) => {
-  if(e.key === 'Escape'){
-    closeImageModal();
-  }
-});
-
-function spawnItem(){
-  if(fallingItems.length>=5)return;
-
-  const randomType=types[Math.floor(Math.random()*types.length)];
-  let size,points;
-
-  if(randomType==="small"){size=80;points=30;}
-  else if(randomType==="medium"){size=90;points=20;}
-  else{size=120;points=10;}
-
-  fallingItems.push({
-    x:size/2+Math.random()*(canvas.width-size),
-    y:-size,
-    size,
-    type:randomType,
-    points,
-    speed:baseSpeed+Math.random()*1.5
-  });
-
-  lastSpawnTime=performance.now();
-}
-
-function updateLevel(){
-  const newLevel = Math.floor(score / 50) + 1;
-
-  if(newLevel !== level){
-    level = newLevel;
-    levelEl.textContent = level;
-
-    baseSpeed = 2 + (level - 1) * 0.8;
-    spawnInterval = Math.max(800, 2500 - (level - 1) * 300);
-
-    fallingItems.forEach(item=>{
-      item.speed = baseSpeed + Math.random()*1.5;
-    });
-  }
-}
-
-function createExplosion(x,y){
-  explosions.push({
-    x,y,
-    radius:10,
-    alpha:1,
-    sparks:Array.from({length:14},()=>({
-      angle:Math.random()*Math.PI*2,
-      speed:2+Math.random()*3,
-      dist:0
-    }))
-  });
-}
-
-function update(){
-  if(gameOver)return;
-
-  const now=performance.now();
-  if(now-lastSpawnTime>spawnInterval)spawnItem();
-
-  for(let i=fallingItems.length-1;i>=0;i--){
-    const it=fallingItems[i];
-    it.y+=it.speed;
-
-    if(it.y>canvas.height-PLAYER_ZONE_HEIGHT){
-      misses++;
-      missesEl.textContent=misses;
-      fallingItems.splice(i,1);
-      if(misses>=3)endGame();
-    }
-  }
-
-  for(let i=explosions.length-1;i>=0;i--){
-    const e=explosions[i];
-    e.radius+=4;
-    e.alpha-=0.05;
-    e.sparks.forEach(s=>s.dist+=s.speed);
-    if(e.alpha<=0)explosions.splice(i,1);
-  }
-}
-
-function draw(){
-  ctx.fillStyle="#fff";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
-
-  ctx.fillStyle="#eee";
-  ctx.fillRect(0,canvas.height-PLAYER_ZONE_HEIGHT,canvas.width,PLAYER_ZONE_HEIGHT);
-
-  if(bankImg.complete)
-    ctx.drawImage(bankImg,bank.x,bank.y,BANK_WIDTH,BANK_HEIGHT);
-
-  for(const item of fallingItems){
-    const h=item.size/2;
-
-    if(item.type==="small"&&smallImg.complete)
-      ctx.drawImage(smallImg,item.x-h,item.y-h,item.size,item.size);
-    else if(item.type==="medium"&&mediumImg.complete)
-      ctx.drawImage(mediumImg,item.x-h,item.y-h,item.size,item.size);
-    else if(item.type==="large"&&largeImg.complete)
-      ctx.drawImage(largeImg,item.x-h,item.y-h,item.size,item.size);
-    else{
-      ctx.fillStyle="#999";
-      ctx.fillRect(item.x-h,item.y-h,item.size,item.size);
-    }
-
-    if(item.type==="small"){
-      ctx.fillStyle="#000";
-      ctx.font=`bold ${item.size*0.32}px Arial Black`;
-      ctx.textAlign="center";
-      ctx.textBaseline="middle";
-      ctx.fillText("НЖЯ",item.x,item.y);
-    }
-  }
-
-  explosions.forEach(e=>{
-    ctx.globalAlpha=e.alpha;
-    ctx.beginPath();
-    ctx.arc(e.x,e.y,e.radius,0,Math.PI*2);
-    ctx.fillStyle="orange";
-    ctx.fill();
-
-    e.sparks.forEach(s=>{
-      const sx=e.x+Math.cos(s.angle)*s.dist;
-      const sy=e.y+Math.sin(s.angle)*s.dist;
-      ctx.fillStyle="yellow";
-      ctx.fillRect(sx,sy,4,4);
-    });
-
-    ctx.globalAlpha=1;
-  });
-
-  if(shotgun.complete)
-    ctx.drawImage(shotgun,player.x-player.width/2,player.y-player.height/2,player.width,player.height);
-
-  if(crosshair.complete)
-    ctx.drawImage(crosshair,mouseX-25,mouseY-25,50,50);
-}
-
-canvas.addEventListener("click",()=>{
-  if(gameOver)return;
-
-  for(let i=fallingItems.length-1;i>=0;i--){
-    const it=fallingItems[i];
-    if(mouseX>=it.x-it.size/2 &&
-       mouseX<=it.x+it.size/2 &&
-       mouseY>=it.y-it.size/2 &&
-       mouseY<=it.y+it.size/2){
-
-      score+=it.points;
-      scoreEl.textContent=score;
-
-      updateLevel();
-      createExplosion(it.x,it.y);
-      fallingItems.splice(i,1);
-      spawnItem();
-      break;
-    }
-  }
-});
-
-canvas.addEventListener("mousemove",e=>{
-  const r=canvas.getBoundingClientRect();
-  mouseX=e.clientX-r.left;
-  mouseY=e.clientY-r.top;
-  player.x=Math.max(player.width/2,
-    Math.min(canvas.width-player.width/2,mouseX));
-});
-
-// Функция формирования поздравления
-function getCongratsMessage(score, level){
-    let title, subtitle, rank;
-  
-  if(score >= 800){
-    title = "🏆 ВОРОШИЛОВСКИЙ СТРЕЛОК! 🏆";
-    subtitle = "Ваше стратегическое видение и безупречное исполнение задач вызывают глубокое уважение. " +
-            "Вы установили новый стандарт профессионализма. Хотим пожелать новых побед и искренне поздравляем вас с Днём защитника Отечества!";
-    rank = "h1";
-  } else if(score >= 450){
-    title = "⭐ ГВАРДЕЙСКИЙ ОФИЦЕР! ⭐";
-    subtitle = "Командир отличился! Ваше умение предвидеть риски и принимать взвешенные решения обеспечивает " +
-            "стабильность всему коллективу. Ваш вклад в развитие компании неоценим. Желаем вам достигать все новых высот, С праздником!";
-    rank = "h2";
-  } else if(score >= 250){
-    title = "🎖️ ЛУЧШИЙ БОЕЦ АУДИТА! 🎖️";
-    subtitle = "Надёжный тыл — залог победы! Настоящий защитник от мошенников, НЖЯ и рисков. Хотим пожелать вам побед" +
-            " и новых свершений! С праздником 23 февраля !";
-
-    rank = "h3";
-  } else if(score >= 100){
-    title = "🛡️ БОЕЦ НЕВИДИМОГО ФРОНТА! 🛡️";
-    subtitle = "Тихий профессионал! Работает чётко, без лишнего шума. Центральный штаб отметит выдержку и хладнокровие!" +
-            " Желаем минимум стресса и максимум положительных эмоций, с праздником 23 февраля";
-    rank = "h4";
-  } else if(score >= 50){
-    title = "⚔️ МОЛОДОЙ БОЕЦ! ⚔️";
-    subtitle = "Первый бой — первые победы! Виден потенциал командира. Поздравляем с Днем защитника Отечества и желаем только побед!";
-    rank = "h5";
-  } else {
-    title = "🎖️ НОВОБРАНЕЦ! 🎖️";
-    subtitle = "Служба только начинается! Не надо сдаваться — каждый ас начинал с первого промаха. К следующему 23 февраля все получится, а пока поздравляем и желаем успехов и новых побед!";
-    rank = "h5";
-  }
-  
-  return {
-    title,
-    subtitle,
-    rank,
-    html: `<${rank}>${title}</${rank}>
-           <div class="congrats-score">${score} очков | Уровень ${level}</div>
-           <div class="congrats-message">${subtitle}</div>`
-  };
-}
-
-function endGame(){
-  gameOver=true;
-  const congratsData = getCongratsMessage(score, level);
-  congrats.innerHTML = congratsData.html;
-  modal.style.display="flex";
-  startBtn.style.display="inline-block";
-}
-
-function startGame(){
-  score=0;misses=0;level=1;
-  fallingItems=[];explosions=[];
-  gameOver=false;
-  spawnInterval=2500;
-  baseSpeed=2;
-  lastSpawnTime=performance.now();
-  scoreEl.textContent=0;
-  missesEl.textContent=0;
-  levelEl.textContent=1;
-  spawnItem();
-  startBtn.style.display="none";
-  modal.style.display="none";
-}
-
-startBtn.onclick=startGame;
-closeModal.onclick=startGame;
-
-function loop(){
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-loop();
-</script>
 </body>
 </html>

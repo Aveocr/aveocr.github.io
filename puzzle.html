@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Слайдинг-пазл 🧩</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: #0f172a;
+      color: #e2e8f0;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 10px;
+      gap: 12px;
+    }
+
+    h1 {
+      font-size: clamp(1.3rem, 4vw, 2.4rem);
+      background: linear-gradient(135deg, #818cf8, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-top: 8px;
+    }
+
+    .upload-area {
+      border: 2px dashed #475569;
+      border-radius: 14px;
+      padding: 18px 32px;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.95rem;
+    }
+    .upload-area:hover { border-color: #818cf8; background: rgba(129,140,248,0.07); }
+    .upload-area input { display: none; }
+    .upload-area.loaded { border-color: #22c55e; color: #22c55e; }
+
+    #grid-wrap {
+      position: relative;
+      width: min(90vw, 540px);
+      aspect-ratio: 1;
+    }
+
+    #game {
+      width: 100%;
+      height: 100%;
+      background: #1e293b;
+      border: 6px solid #334155;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.7);
+      position: relative;
+    }
+
+    .tile {
+      position: absolute;
+      background-size: 800% 800%;
+      background-repeat: no-repeat;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: left 0.14s ease, top 0.14s ease;
+    }
+    .tile:hover { filter: brightness(1.12); }
+    .tile.empty { cursor: default; pointer-events: none; }
+
+    .tile::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(0,0,0,0.25);
+      pointer-events: none;
+    }
+
+    #controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 0.65em 1.4em;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      background: #334155;
+      color: #e2e8f0;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #475569; }
+    button.primary { background: #4f46e5; }
+    button.primary:hover { background: #6366f1; }
+    button:disabled { opacity: 0.4; cursor: default; }
+
+    #status {
+      font-size: 1.1rem;
+      min-height: 1.6em;
+      text-align: center;
+    }
+    .won { color: #22c55e; font-weight: bold; animation: pulse 1.5s infinite; }
+    @keyframes pulse {
+      0%,100% { transform: scale(1); }
+      50%      { transform: scale(1.06); }
+    }
+
+    #moves { color: #94a3b8; font-size: 0.9rem; }
+
+    .hint {
+      color: #64748b;
+      font-size: 0.85rem;
+      text-align: center;
+      max-width: 400px;
+    }
+
+    .size-row { 
+      display: flex; 
+      gap: 6px; 
+      align-items: center; 
+      flex-wrap: wrap; 
+      justify-content: center; 
+    }
+    .size-row span { font-size: 0.9rem; color: #94a3b8; }
+    .size-btn {
+      padding: 0.4em 0.9em;
+      font-size: 0.85rem;
+      border-radius: 8px;
+      background: #1e293b;
+      border: 2px solid #334155;
+      color: #cbd5e1;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .size-btn.active { 
+      border-color: #818cf8; 
+      color: #818cf8; 
+      background: rgba(129,140,248,0.1); 
+    }
+  </style>
+</head>
+<body>
+
+<h1>🧩 Слайдинг-пазл</h1>
+
+<label class="upload-area" id="uploadArea">
+  <input type="file" id="fileInput" accept="image/*">
+  📂 Загружается котик по умолчанию (img/cat.jpg)...
+</label>
+
+<div class="size-row">
+  <span>Размер:</span>
+  <button class="size-btn" data-n="3">3×3</button>
+  <button class="size-btn" data-n="4">4×4</button>
+  <button class="size-btn active" data-n="5">5×5</button>
+  <button class="size-btn" data-n="6">6×6</button>
+  <button class="size-btn" data-n="8">8×8</button>
+</div>
+
+<div id="grid-wrap">
+  <div id="game"></div>
+</div>
+
+<div id="controls">
+  <button id="shuffleBtn" class="primary" disabled>🔀 Перемешать</button>
+  <button id="previewBtn" disabled>👁 Показать оригинал</button>
+</div>
+
+<div id="status">Ожидание картинки...</div>
+<div id="moves"></div>
+<p class="hint">Кликайте по плитке рядом с пустым местом, чтобы её сдвинуть</p>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let N = 5;
+let board = [];
+let emptyPos = 0;
+let squareDataUrl = null;
+let moveCount = 0;
+let solved = false;
+let showingPreview = false;
+
+const game       = document.getElementById("game");
+const statusEl   = document.getElementById("status");
+const movesEl    = document.getElementById("moves");
+const shuffleBtn = document.getElementById("shuffleBtn");
+const previewBtn = document.getElementById("previewBtn");
+const fileInput  = document.getElementById("fileInput");
+const uploadArea = document.getElementById("uploadArea");
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const toPos = (r, c) => r * N + c;
+const row   = p => Math.floor(p / N);
+const col   = p => p % N;
+
+function isSolvable(arr) {
+  let inv = 0;
+  const flat = arr.filter(v => v !== N*N-1);
+  for (let i = 0; i < flat.length; i++)
+    for (let j = i+1; j < flat.length; j++)
+      if (flat[i] > flat[j]) inv++;
+
+  if (N % 2 === 1) return inv % 2 === 0;
+  const emptyRow = row(arr.indexOf(N*N-1));
+  const fromBottom = N - 1 - emptyRow;
+  return (inv + fromBottom) % 2 === 0;
+}
+
+// ── Size buttons ───────────────────────────────────────────────────────────
+document.querySelectorAll('.size-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    N = parseInt(btn.dataset.n);
+    if (squareDataUrl) {
+      initBoard();
+      renderTiles();
+      shuffleBoard();
+    }
+  });
+});
+
+// ── File input (пользовательская замена) ───────────────────────────────────
+uploadArea.addEventListener("click", () => fileInput.click());
+
+fileInput.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file || !file.type.startsWith("image/")) return;
+
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      squareDataUrl = makeSquare(img);
+      uploadArea.textContent = "✅ " + file.name + " (нажмите, чтобы сменить)";
+      uploadArea.classList.add("loaded");
+      enableControls();
+      initBoard();
+      renderTiles();
+      shuffleBoard();
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+function makeSquare(img) {
+  const side = Math.min(img.width, img.height);
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = side;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img,
+    (img.width - side) / 2, (img.height - side) / 2, side, side,
+    0, 0, side, side
+  );
+  return canvas.toDataURL();
+}
+
+function loadDefaultImage() {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+
+  img.onload = () => {
+    squareDataUrl = makeSquare(img);
+    uploadArea.textContent = "🐱 Котик загружен (img/cat.jpg)";
+    uploadArea.classList.add("loaded");
+    enableControls();
+    initBoard();
+    renderTiles();
+    shuffleBoard();
+  };
+
+  img.onerror = () => {
+    // Fallback to online cat if local file is blocked or missing
+    const fallbackUrl = "img/cat.jpg";
+    squareDataUrl = fallbackUrl;
+    uploadArea.textContent = "⚠️ Локальный котик не загрузился → используется онлайн-версия";
+    uploadArea.classList.add("loaded");
+    enableControls();
+    initBoard();
+    renderTiles();
+    shuffleBoard();
+  };
+
+  img.src = "img/cat.jpg?" + Date.now();
+}
+
+function enableControls() {
+  shuffleBtn.disabled = false;
+  previewBtn.disabled = false;
+}
+
+// ── Board init ─────────────────────────────────────────────────────────────
+function initBoard() {
+  board = Array.from({length: N*N}, (_, i) => i);
+  emptyPos = N*N - 1;
+  moveCount = 0;
+  solved = false;
+  movesEl.textContent = "";
+  statusEl.textContent = "";
+  statusEl.classList.remove("won");
+}
+
+// ── Render tiles ───────────────────────────────────────────────────────────
+function renderTiles() {
+  game.innerHTML = "";
+  const pct = 100 / N;
+
+  for (let tileNum = 0; tileNum < N*N; tileNum++) {
+    const div = document.createElement("div");
+    div.className = "tile" + (tileNum === N*N-1 ? " empty" : "");
+    div.id = "tile-" + tileNum;
+    div.style.width  = `${pct}%`;
+    div.style.height = `${pct}%`;
+
+    if (tileNum !== N*N-1) {
+      const tc = col(tileNum);
+      const tr = row(tileNum);
+      const bgPct = N > 1 ? 100 / (N - 1) : 0;
+      div.style.backgroundImage    = `url(${squareDataUrl})`;
+      div.style.backgroundSize     = `${N * 100}% ${N * 100}%`;
+      div.style.backgroundPosition = `${tc * bgPct}% ${tr * bgPct}%`;
+    }
+
+    div.addEventListener("click", () => {
+      const pos = board.indexOf(tileNum);
+      handleClick(pos);
+    });
+
+    game.appendChild(div);
+  }
+
+  positionTiles();
+}
+
+function positionTiles() {
+  const pct = 100 / N;
+  for (let pos = 0; pos < N*N; pos++) {
+    const tileNum = board[pos];
+    const div = document.getElementById("tile-" + tileNum);
+    if (!div) continue;
+    div.style.left = `${col(pos) * pct}%`;
+    div.style.top  = `${row(pos) * pct}%`;
+  }
+}
+
+// ── Move logic ─────────────────────────────────────────────────────────────
+function handleClick(clickedPos) {
+  if (solved || showingPreview) return;
+
+  const er = row(emptyPos), ec = col(emptyPos);
+  const cr = row(clickedPos), cc = col(clickedPos);
+  const dr = Math.abs(er - cr), dc = Math.abs(ec - cc);
+
+  if (!((dr === 1 && dc === 0) || (dr === 0 && dc === 1))) return;
+
+  [board[emptyPos], board[clickedPos]] = [board[clickedPos], board[emptyPos]];
+  emptyPos = clickedPos;
+  moveCount++;
+  movesEl.textContent = `Ходов: ${moveCount}`;
+
+  positionTiles();
+  checkWin();
+}
+
+function checkWin() {
+  if (board.every((v, i) => v === i)) {
+    solved = true;
+    statusEl.textContent = `🎉 Собрано за ${moveCount} ходов!`;
+    statusEl.classList.add("won");
+  }
+}
+
+// ── Shuffle ────────────────────────────────────────────────────────────────
+shuffleBtn.addEventListener("click", shuffleBoard);
+
+function shuffleBoard() {
+  initBoard();
+
+  for (let i = board.length - 2; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [board[i], board[j]] = [board[j], board[i]];
+  }
+  if (!isSolvable(board)) {
+    const nonEmpty = board.map((v,i)=>i).filter(i => board[i] !== N*N-1);
+    if (nonEmpty.length >= 2) {
+      [board[nonEmpty[0]], board[nonEmpty[1]]] = [board[nonEmpty[1]], board[nonEmpty[0]]];
+    }
+  }
+  emptyPos = board.indexOf(N*N-1);
+
+  renderTiles();
+  statusEl.textContent = "Собери пазл!";
+}
+
+// ── Preview ────────────────────────────────────────────────────────────────
+previewBtn.addEventListener("mousedown", showPreview);
+previewBtn.addEventListener("touchstart", showPreview, {passive:true});
+previewBtn.addEventListener("mouseup", hidePreview);
+previewBtn.addEventListener("mouseleave", hidePreview);
+previewBtn.addEventListener("touchend", hidePreview);
+
+function showPreview() {
+  if (!squareDataUrl) return;
+  showingPreview = true;
+  game.style.background = `url(${squareDataUrl}) center/cover no-repeat`;
+  game.querySelectorAll(".tile").forEach(t => t.style.opacity = "0");
+  previewBtn.textContent = "👁 Отпустите";
+}
+function hidePreview() {
+  showingPreview = false;
+  game.style.background = "";
+  game.querySelectorAll(".tile").forEach(t => t.style.opacity = "");
+  previewBtn.textContent = "👁 Показать оригинал";
+}
+
+// ── Старт ──────────────────────────────────────────────────────────────────
+window.addEventListener('load', loadDefaultImage);
+</script>
+</body>
+</html>

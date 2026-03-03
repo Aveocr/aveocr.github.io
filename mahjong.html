@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🀄 Весенние тайны - Mahjong 8 марта</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #ffb6c1, #ff9a9e, #fecfef, #fecfef);
+      color: #333;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    h1 {
+      font-size: clamp(1.8rem, 5vw, 2.5rem);
+      background: linear-gradient(135deg, #ff6b9d, #c44569);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+
+    #game-container {
+      position: relative;
+      width: min(95vw, 600px);
+      height: min(95vw, 600px);
+      background: rgba(255,255,255,0.1);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+      display: grid;
+      place-items: center;
+    }
+
+    #game {
+      position: relative;
+      width: 90%;
+      height: 90%;
+      perspective: 1000px;
+    }
+
+    .tile {
+      position: absolute;
+      width: 11.5%;
+      height: 15%;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+      user-select: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .tile:hover { 
+      transform: translateY(-5px) scale(1.05) !important;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important;
+    }
+
+    .tile.matched { 
+      opacity: 0;
+      transform: scale(0) rotateY(720deg) !important;
+      pointer-events: none;
+    }
+
+    .tile.selected { 
+      box-shadow: 0 0 20px #ffd700, 0 0 40px #ffd700 !important;
+      transform: translateY(-8px) scale(1.08) !important;
+    }
+
+    .tile.unavailable { 
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .tile.unavailable:hover { transform: none !important; }
+
+    .tile.front {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(145deg, #fff, #f8f9fa);
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 2.2em;
+      backface-visibility: hidden;
+      transform: rotateY(0deg);
+    }
+
+    /* 16 весенних тематических тайлов */
+    .tile-0 .front { background: linear-gradient(145deg, #ff9ff3, #f368e0); } /* 🌸 */
+    .tile-1 .front { background: linear-gradient(145deg, #feca57, #ff9ff3); } /* 🌺 */
+    .tile-2 .front { background: linear-gradient(145deg, #48dbfb, #0abde3); } /* 💐 */
+    .tile-3 .front { background: linear-gradient(145deg, #ff6b9d, #c44569); } /* 🎁 */
+    .tile-4 .front { background: linear-gradient(145deg, #f0932b, #eb4d4b); } /* 👗 */
+    .tile-5 .front { background: linear-gradient(145deg, #6c5ce7, #a29bfe); } /* 💄 */
+    .tile-6 .front { background: linear-gradient(145deg, #fdcb6e, #e17055); } /* 👑 */
+    .tile-7 .front { background: linear-gradient(145deg, #00b894, #00cec9); } /* 💖 */
+    .tile-8 .front { background: linear-gradient(145deg, #55a3ff, #0052d4); } /* 🦋 */
+    .tile-9 .front { background: linear-gradient(145deg, #ff7675, #fd79a8); } /* 💝 */
+    .tile-10.front { background: linear-gradient(145deg, #00b09b, #96c93d); } /* 🌼 */
+    .tile-11.front { background: linear-gradient(145deg, #feca57, #ff9ff3); } /* ⭐ */
+    .tile-12.front { background: linear-gradient(145deg, #a8e6cf, #88d8a3); } /* 🌷 */
+    .tile-13.front { background: linear-gradient(145deg, #ff3838, #ff758f); } /* 💎 */
+    .tile-14.front { background: linear-gradient(145deg, #667eea, #764ba2); } /* 🎀 */
+    .tile-15.front { background: linear-gradient(145deg, #f7d794, #fd8a5e); } /* 🌹 */
+
+    #controls {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 25px;
+      background: linear-gradient(145deg, #ff6b9d, #c44569);
+      color: white;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(196,69,105,0.4);
+    }
+    button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(196,69,105,0.6); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    #status {
+      font-size: 1.3rem;
+      font-weight: bold;
+      min-height: 2em;
+      text-align: center;
+    }
+    .won { 
+      color: #00b894 !important; 
+      font-size: 1.5rem;
+      animation: celebrate 2s infinite;
+    }
+    @keyframes celebrate {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    #progress {
+      width: 300px;
+      height: 12px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+    }
+    #progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6b9d, #4ecdc4);
+      width: 0%;
+      transition: width 0.3s;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ff6b9d;
+    }
+
+    .hint { 
+      text-align: center; 
+      color: #666; 
+      font-size: 0.95rem;
+      max-width: 400px;
+    }
+
+    @media (max-width: 480px) {
+      .tile { width: 14%; height: 17%; font-size: 1.8em; }
+      #controls { gap: 10px; }
+      button { padding: 10px 18px; font-size: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🀄 Весенние тайны</h1>
+  <p class="hint">Кликай пары одинаковых тайлов — они должны быть свободны! Собери букет к 8 марта 💐</p>
+
+  <div id="game-container">
+    <div id="game"></div>
+  </div>
+
+  <div id="progress-container">
+    <div id="progress"><div id="progress-bar"></div></div>
+  </div>
+
+  <div id="status">64 тайла до букета...</div>
+
+  <div id="controls">
+    <button id="hintBtn">💡 Подсказка</button>
+    <button id="shuffleBtn">🔀 Перемешать (3)</button>
+    <button id="newGameBtn">🎮 Новая игра</button>
+  </div>
+
+  <script>
+    // ── Game State ────────────────────────────────────────────────────────────
+    let tiles = [];
+    let selectedTile = null;
+    let shuffleCount = 3;
+    let matchedPairs = 0;
+
+    const game = document.getElementById('game');
+    const statusEl = document.getElementById('status');
+    const progressBar = document.getElementById('progress-bar');
+    const hintBtn = document.getElementById('hintBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const newGameBtn = document.getElementById('newGameBtn');
+
+    // 16 уникальных весенних тайлов (по 4 копии каждого = 64)
+    const tileTypes = ['🌸','🌺','💐','🎁','👗','💄','👑','💖','🦋','💝','🌼','⭐','🌷','💎','🎀','🌹'];
+
+    // ── Core Logic ────────────────────────────────────────────────────────────
+    function initGame() {
+      tiles = [];
+      selectedTile = null;
+      matchedPairs = 0;
+      shuffleCount = 3;
+      shuffleBtn.textContent = '🔀 Перемешать (3)';
+      statusEl.textContent = '64 тайла до букета...';
+      statusEl.classList.remove('won');
+      game.innerHTML = '';
+
+      // Classic Mahjong layout (turtle shape)
+      const layout = [
+        [0,0,1,1,1,1,0,0],
+        [0,1,2,2,2,2,1,0],
+        [1,2,3,3,3,3,2,1],
+        [1,2,4,4,4,4,2,1],
+        [1,2,4,5,5,4,2,1],
+        [1,2,4,5,5,4,2,1],
+        [1,2,4,4,4,4,2,1],
+        [1,2,3,3,3,3,2,1],
+        [0,1,2,2,2,2,1,0],
+        [0,0,1,1,1,1,0,0],
+        [0,0,0,1,1,0,0,0],
+        [0,0,0,1,1,0,0,0],
+        [0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0]
+      ];
+
+      // Create tiles
+      for (let row = 0; row < layout.length; row++) {
+        for (let col = 0; col < layout[row].length; col++) {
+          if (layout[row][col] !== 0) {
+            const tileIndex = tiles.length;
+            const typeIndex = Math.floor(tileIndex / 4) % tileTypes.length;
+            
+            tiles.push({
+              id: tileIndex,
+              type: typeIndex,
+              row, col,
+              matched: false,
+              element: null
+            });
+          }
+        }
+      }
+
+      // Shuffle tiles among positions
+      tiles.sort(() => Math.random() - 0.5);
+      
+      renderTiles();
+      updateProgress();
+    }
+
+    function renderTiles() {
+      tiles.forEach((tile, index) => {
+        const div = document.createElement('div');
+        div.className = `tile tile-${tile.type}`;
+        div.dataset.tileId = tile.id;
+        
+        div.innerHTML = `
+          <div class="front">${tileTypes[tile.type]}</div>
+        `;
+        
+        // Position
+        const sizeX = 100 / 8;
+        const sizeY = 100 / 14;
+        const offsetX = (100 - 8 * sizeX) / 2;
+        const offsetY = (100 - 14 * sizeY) / 2;
+        
+        div.style.left = `${offsetX + tile.col * sizeX}%`;
+        div.style.top = `${offsetY + tile.row * sizeY}%`;
+        
+        tile.element = div;
+        game.appendChild(div);
+        
+        div.addEventListener('click', () => handleTileClick(tile));
+      });
+    }
+
+    function handleTileClick(tile) {
+      if (tile.matched || isTileBlocked(tile)) return;
+
+      if (selectedTile && selectedTile !== tile && selectedTile.type === tile.type) {
+        // Match found!
+        matchTiles(selectedTile, tile);
+        selectedTile = null;
+      } else {
+        // Select tile
+        if (selectedTile) selectedTile.element.classList.remove('selected');
+        selectedTile = tile;
+        tile.element.classList.add('selected');
+        
+        setTimeout(() => {
+          if (selectedTile === tile) {
+            tile.element.classList.remove('selected');
+            selectedTile = null;
+          }
+        }, 1000);
+      }
+    }
+
+    function isTileBlocked(tile) {
+      // Check if tile has free left/right/top side
+      const hasLeft = tile.col === 0 || tiles.some(t => 
+        t.row === tile.row && t.col === tile.col - 1 && !t.matched
+      );
+      const hasRight = tile.col === 7 || tiles.some(t => 
+        t.row === tile.row && t.col === tile.col + 1 && !t.matched
+      );
+      const hasTop = tile.row === 0 || tiles.some(t => 
+        t.col === tile.col && t.row === tile.row - 1 && !t.matched
+      );
+      
+      const blocked = hasLeft && hasRight && hasTop;
+      if (blocked) tile.element.classList.add('unavailable');
+      else tile.element.classList.remove('unavailable');
+      
+      return blocked;
+    }
+
+    function matchTiles(tile1, tile2) {
+      tile1.matched = tile2.matched = true;
+      tile1.element.classList.add('matched');
+      tile2.element.classList.add('matched');
+      
+      matchedPairs++;
+      updateProgress();
+      
+      if (matchedPairs === 32) {
+        setTimeout(celebrate, 500);
+      }
+    }
+
+    function updateProgress() {
+      const progress = (matchedPairs / 32) * 100;
+      progressBar.style.width = `${progress}%`;
+      statusEl.textContent = `${64 - matchedPairs * 2} тайлов до букета...`;
+    }
+
+    function celebrate() {
+      statusEl.textContent = '🎉 С 8 марта, Королева! 💐👑';
+      statusEl.classList.add('won');
+      
+      // Simple confetti
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.cssText = `
+          position: fixed; top: 0; left: ${Math.random()*100}vw; 
+          width: 10px; height: 10px; background: ${['#ff6b9d','#4ecdc4','#45b7d1','#f9ca24','#f0932b'][Math.floor(Math.random()*5)]};
+          animation: confetti-fall 3s linear infinite; pointer-events: none; z-index: 9999;
+        `;
+        confetti.style.animationDelay = `${Math.random()*3}s`;
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => confetti.remove(), 3000);
+      }
+    }
+
+    // ── Controls ──────────────────────────────────────────────────────────────
+    hintBtn.addEventListener('click', findHint);
+    shuffleBtn.addEventListener('click', shuffleBoard);
+    newGameBtn.addEventListener('click', initGame);
+
+    function findHint() {
+      const availableTiles = tiles.filter(t => !t.matched && !isTileBlocked(t));
+      const matches = [];
+      
+      for (let i = 0; i < availableTiles.length; i++) {
+        for (let j = i + 1; j < availableTiles.length; j++) {
+          if (availableTiles[i].type === availableTiles[j].type) {
+            matches.push([availableTiles[i], availableTiles[j]]);
+          }
+        }
+      }
+      
+      if (matches.length > 0) {
+        const [tile1, tile2] = matches[0];
+        tile1.element.classList.add('selected');
+        tile2.element.classList.add('selected');
+        
+        setTimeout(() => {
+          tile1.element.classList.remove('selected');
+          tile2.element.classList.remove('selected');
+        }, 1500);
+      }
+    }
+
+    function shuffleBoard() {
+      if (shuffleCount <= 0) return;
+      
+      tiles.forEach(tile => {
+        if (!tile.matched) {
+          tile.row = Math.floor(Math.random() * 14);
+          tile.col = Math.floor(Math.random() * 8);
+        }
+      });
+      
+      // Re-render positions
+      tiles.forEach(tile => {
+        const sizeX = 100 / 8;
+        const sizeY = 100 / 14;
+        const offsetX = (100 - 8 * sizeX) / 2;
+        const offsetY = (100 - 14 * sizeY) / 2;
+        
+        tile.element.style.left = `${offsetX + tile.col * sizeX}%`;
+        tile.element.style.top = `${offsetY + tile.row * sizeY}%`;
+      });
+      
+      shuffleCount--;
+      shuffleBtn.textContent = `🔀 Перемешать (${shuffleCount})`;
+    }
+
+    // CSS for confetti
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes confetti-fall {
+        0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // ── Start ──────────────────────────────────────────────────────────────────
+    initGame();
+  </script>
+</body>
+</html>
